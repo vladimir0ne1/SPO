@@ -4,7 +4,7 @@
 
 /* declare tokens */
 %token NUMBER
-%token ADD SUB MUL DIV ABS
+%token ADD SUB MUL DIV ABS MOD
 %token OP CP	
 %token EOL								// end of line
 %token IF ELSE
@@ -15,99 +15,90 @@
 %token LESS_OR_EQUAL LARGER_OR_EQUAL	// <= >=
 %token GOTO BREAK CONTINUE
 %token COMMENTS
-%token INT CHAR
+%token INT CHAR VOID
 %token LEFT_BR RIGHT_BR					//()
 %token LEFT_BRACE RIGHT_BRACE 			//{}
 %token LEFT_SQBR RIGHT_SQBR				//[]
 %token MAIN
 %token CONST
 %token IDENT
-%token COMMA
+%token COMMA SEMICOLON
 %token ASSIGNMENT 						// =
+
+%left ASSIGNMENT
+%left ADD SUB
+%left MUL DIV MOD
+%left UMINUS
+
 %%
 
-condition_operator:	LESS | LARGER | LESS_OR_EQUAL | LARGER_OR_EQUAL
- | EQUAL | NOT_EQUAL
+function_body:
+ | function_body complited_action
+ | function_body EOL
  ;
- 
-bin_operator: OR | AND
+
+complited_action: action SEMICOLON {puts("action!");}
+ //| condition
  ;
- 
-type: INT | CHAR | VOID
+
+action: function_call { puts("function call"); }
+ | assignment_operator { puts("assignment"); }
+ | variable_declaration  { puts("declaration"); }
+ //| loop
  ;
- 
-param_list: param_list COMMA
- | function_parameter
- ;
- 
-function_call: identifier LEFT_BR param_list RIGHT_BR
- ;
- 
-complited_action: action SEMICOLON
- | condition
- ;
- 
-action: function_call 
- | assignment_operator 
- | variable_declaration
- | loop
- ;
- 
+
 assignment_operator:
  | IDENT ASSIGNMENT function_parameter
  ;
- 
-function_parameter: IDENT | NUMBER
- | function_call
- | arithmetic_operation
- ;
- 
+
 variable_declaration: type declaration_list
  ;
- 
-declaration_list: declaration_list COMMA
- | IDENT
- ;
- 
-function_prototype: type ident LEFT_BR function_declaration_list RUGHT_BR SEMICOLON
- ;
- 
-function_declaration_list: function_declaration_list COMMA
- | type IDENT
- ;
- 
-function_description: function_prototype LEFT_BRACE function_body RIGHT_BRACE
- ;
- 
-function_body: function_body
- | complited_action
+
+type: INT { puts("type int"); }
+ | CHAR | VOID 
  ;
 
+declaration_list: declaration_list COMMA IDENT { puts("ident,"); }
+ | IDENT { puts("ident"); }
+ ;
  
-//===== CONDITION ======//
+//=========================================
 
-condition: condition_if
- | condition_if condition_else
- ;
- 
-condition_if: IF LEFT_BR condition_expression_list RIGHT_BR LEFT_BRACE function_body RIGHT_BRACE
- ;
- 
-condition_else: ELSE LEFT_BRACE function_body RIGHT_BRACE
+
+function_parameter: arithmetic_operation { puts("arifmetic");}
+ | function_call
  ;
 
-condition_expression_list: condition_expression_list bin_operator
- | condition_expression
+function_call: IDENT LEFT_BR param_list RIGHT_BR { puts("func_call");}
  ;
  
-cond_expression: NOT LEFT_BR cond_temp RIGHT_BR
- | LEFT_BR cond_temp
- | cond_temp
- ;
- 
-cond_temp: function_parameter condition_operator function_parameter
+param_list: param_list COMMA function_parameter { puts("function_parameter , ");}
+ | function_parameter { puts("function_parameter");}
  ;
 
-//===== LOOP =====//
-loop: DO LEFT_BRACE function_body RIGHT_BRACE WHILE LEFT_BR condition_expression_list RIGHT_BR
+arithmetic_operation: ABS arithmetic_operation ABS { $$ = $2 >= 0 ? $2 : -$2; }
+ | arithmetic_operation SUB arithmetic_operation { $$ = $1 - $3; }
+ | arithmetic_operation ADD arithmetic_operation { $$ = $1 + $3; }
+ | arithmetic_operation MUL arithmetic_operation { $$ = $1*$3; }
+ | arithmetic_operation DIV arithmetic_operation { $$ = $1/$3; }
+ | arithmetic_operation MOD arithmetic_operation { $$ = $1%$3; }
+ | SUB arithmetic_operation %prec UMINUS {$$=-$2;}
+ | NUMBER {$$=$1;}
+ | IDENT { puts("arithmetic ident"); }
  ;
+
+//========================= END ==============================
+
+ %%
+main(int argc, char **argv)
+{
+	yyparse();
+}
+
+yyerror(char *s)
+{
+	fprintf(stderr, "error: %s\n", s);
+	//printf("Ошибка: , l%d,c%d-l%d,c%d\n",
+     //                   @3.first_line, @3.first_column,
+      //                   @3.last_line, @3.last_column);}
+}
