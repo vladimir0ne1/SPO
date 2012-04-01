@@ -19,7 +19,9 @@
 %token LEFT_BR RIGHT_BR					//()
 %token LEFT_BRACE RIGHT_BRACE 			//{}
 %token LEFT_SQBR RIGHT_SQBR				//[]
+
 %token MAIN
+
 %token CONST
 %token IDENT
 %token COMMA SEMICOLON
@@ -37,12 +39,32 @@
 
 %%
 
+program: program_x EOL main { puts("programm"); }
+ ;
+
+program_x:
+ | program_x EOL
+ | function_declaration { puts("func decl"); }
+ ;
+
+function_declaration: type IDENT LEFT_BR func_prototype_decl RIGHT_BR LEFT_BRACE function_body RIGHT_BRACE
+ | type IDENT LEFT_BR func_prototype_decl RIGHT_BR EOL LEFT_BRACE function_body RIGHT_BRACE
+ ;
+
+func_prototype_decl: type IDENT
+ | func_prototype_decl COMMA type IDENT
+ ;
+
+main: type MAIN LEFT_BR func_prototype_decl RIGHT_BR LEFT_BRACE function_body RIGHT_BRACE { puts("main"); }
+ | type MAIN LEFT_BR func_prototype_decl RIGHT_BR EOL LEFT_BRACE function_body RIGHT_BRACE { puts("main"); }
+ ;
+
 function_body:
  | function_body complited_action
  | function_body EOL
  ;
 
-complited_action: action SEMICOLON {puts("action!");}
+complited_action: action SEMICOLON
  | condition
  ;
 
@@ -60,15 +82,15 @@ assignment_operator:
 variable_declaration: type declaration_list
  ;
 
-type: INT { puts("type int"); }
+type: INT 
  | CHAR | VOID 
  ;
 
-declaration_list: declaration_list COMMA dec_temp { puts("ident,"); }
+declaration_list: declaration_list COMMA dec_temp 
  | dec_temp
  ;
 
-dec_temp: IDENT { puts("ident"); }
+dec_temp: IDENT 
  | assignment_operator
  | array
  | td_array
@@ -76,7 +98,7 @@ dec_temp: IDENT { puts("ident"); }
  
 //============= FUNCTION ============================
 
-function_parameter: arithmetic_operation { puts("arifmetic");}
+function_parameter: arithmetic_operation 
  | function_call
  ;
 
@@ -98,7 +120,7 @@ arithmetic_operation: LEFT_BR arithmetic_operation RIGHT_BR
  | arithmetic_operation MOD arithmetic_operation { $$ = $1%$3; }
  | SUB arithmetic_operation %prec UMINUS {$$=-$2;}
  | NUMBER {$$=$1;}
- | IDENT { puts("arithmetic ident"); }
+ | IDENT 
  | array
  | td_array
  ;

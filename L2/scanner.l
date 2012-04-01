@@ -8,7 +8,7 @@
 int { return INT; }
 char { return CHAR; }
 void { return VOID; }
-
+main { return MAIN; }
 \n	{ return EOL; }
 
 if { return IF; }
