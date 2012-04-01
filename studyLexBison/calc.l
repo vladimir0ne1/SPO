@@ -1,17 +1,19 @@
 
 %{
 #include "calc.tab.h"
+int column = 0;
 %}
 
 %%
-"+"	{ return ADD; }
-"-"	{ return SUB; }
-"*"	{ return MUL; }
-"/"	{ return DIV; }
-"|"	{ return ABS; }
-[0-9]+	{ yylval = atoi(yytext); return NUM; }
+"+"	{ column++; return ADD; }
+"-"	{ column++; return SUB; }
+"*"	{ column++; return MUL; }
+"/"	{ column++; return DIV; }
+"|"	{ column++; return ABS; }
+"%" { column++; return MOD; }
+[0-9]+	{ column++; yylval = atoi(yytext); return NUM; }
 \n		{ return EOL; }
-[ \t]	{ /* ignore whitespace */}
-.		{printf("Mystery character %s\n", yytext);}
+[ \t]	{ column++; /* ignore whitespace */}
+.		{column++; printf("Mystery character %s\n", yytext);}
 
 %%
