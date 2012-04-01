@@ -10,8 +10,12 @@ char { return CHAR; }
 void { return VOID; }
 
 \n	{ return EOL; }
+
 if { return IF; }
 else { return ELSE; }
+
+do { return DO; }
+while { return WHILE; }
 
 \( { return LEFT_BR; }
 \) { return RIGHT_BR; }
@@ -19,8 +23,8 @@ else { return ELSE; }
 \[ { return LEFT_SQBR; }
 \] { return RIGHT_SQBR; }
 
-\} { return LEFT_BRACE; }
-\{ { return RIGHT_BRACE; }
+"{" { return LEFT_BRACE; }
+"}" { return RIGHT_BRACE; }
 
 "=" { return ASSIGNMENT; }
 
