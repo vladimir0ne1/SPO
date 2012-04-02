@@ -9,7 +9,7 @@ int { return INT; }
 char { return CHAR; }
 void { return VOID; }
 main { return MAIN; }
-\n	{ return EOL; }
+\n	{ yylloc.first_line++; return EOL; }
 
 if { return IF; }
 else { return ELSE; }
@@ -55,6 +55,7 @@ while { return WHILE; }
  
 %%				// Секция объявления вспомагательных функций
 //		"/""*".*"*""/"	func("Comments");
+
 void skipcomments()
 {
 	//printf("(%d:%d) Comments: ", lineCounter, symbolCounter);
@@ -74,6 +75,7 @@ void skipcomments()
 		}
 		if (c == '\n')
 		{
+			yylloc.first_line++;
 		//	lineCounter++;
 		}
 		if(c == EOF)
@@ -94,7 +96,7 @@ void skipcomments()
 			}
 			else
 			{
-				puts(str);
+				//puts(str);
 				break;
 			}
 		}

@@ -5,7 +5,6 @@
 /* declare tokens */
 %token NUMBER
 %token ADD SUB MUL DIV ABS MOD
-%token OP CP	
 %token EOL								// end of line
 %token IF ELSE
 %token DO WHILE
@@ -36,14 +35,17 @@
 %left ADD SUB
 %left MUL DIV MOD
 %left UMINUS
+%left LEFT_BR RIGHT_BR
 
 %%
 
 program: program_x EOL main { puts("programm"); }
+ | main
  ;
 
 program_x:
  | program_x EOL
+ | program_x EOL function_declaration { puts("func decl"); }
  | function_declaration { puts("func decl"); }
  ;
 
@@ -51,13 +53,16 @@ function_declaration: type IDENT LEFT_BR func_prototype_decl RIGHT_BR LEFT_BRACE
  | type IDENT LEFT_BR func_prototype_decl RIGHT_BR EOL LEFT_BRACE function_body RIGHT_BRACE
  ;
 
-func_prototype_decl: type IDENT
+func_prototype_decl:
+ |type IDENT
  | func_prototype_decl COMMA type IDENT
  ;
 
 main: type MAIN LEFT_BR func_prototype_decl RIGHT_BR LEFT_BRACE function_body RIGHT_BRACE { puts("main"); }
  | type MAIN LEFT_BR func_prototype_decl RIGHT_BR EOL LEFT_BRACE function_body RIGHT_BRACE { puts("main"); }
  ;
+
+//===================================================================
 
 function_body:
  | function_body complited_action
@@ -66,6 +71,7 @@ function_body:
 
 complited_action: action SEMICOLON
  | condition
+ | error SEMICOLON {printf("ERROR: line: %d: action error\n", @1.first_line); }
  ;
 
 action: function_call { puts("function call"); }
@@ -102,13 +108,13 @@ function_parameter: arithmetic_operation
  | function_call
  ;
 
-function_call: IDENT LEFT_BR param_list RIGHT_BR { puts("func_call");}
+function_call: IDENT LEFT_BR param_list RIGHT_BR
  ;
  
 param_list:
- //| param_list COMMA EOL function_parameter { puts("function_parameter eol, ");}
- | param_list COMMA function_parameter { puts("function_parameter , ");}
- | function_parameter { puts("function_parameter");}
+ | param_list COMMA function_parameter
+ | function_parameter
+ //| error { puts("param list error"); }
  ;
 
 arithmetic_operation: LEFT_BR arithmetic_operation RIGHT_BR
@@ -133,7 +139,7 @@ loop: DO LEFT_BRACE function_body RIGHT_BRACE WHILE LEFT_BR condition_expression
 
 condition: condition_if	{ puts("condition if"); }
  //| condition_if condition_else { puts("condition if else"); }
- | condition_if EOL condition_else { puts("condition if else"); }
+ | condition_if EOL condition_else { puts("condition_if_else"); }
  ;
  
 condition_if: IF LEFT_BR condition_expression_list RIGHT_BR LEFT_BRACE function_body RIGHT_BRACE
@@ -150,6 +156,7 @@ condition_expression_list: condition_expression_list bin_operator condition_expr
  
 condition_expression: NOT cond_temp 
  | cond_temp
+ | error {printf("ERROR: line: %d: condition error\n", @1.first_line); }
  ;
  
 cond_temp: LEFT_BR cond_temp RIGHT_BR { puts("cond_temp in br"); }
@@ -187,7 +194,4 @@ main(int argc, char **argv)
 yyerror(char *s)
 {
 	fprintf(stderr, "error: %s\n", s);
-	//printf("Ошибка: , l%d,c%d-l%d,c%d\n",
-     //                   @3.first_line, @3.first_column,
-      //                   @3.last_line, @3.last_column);}
 }
