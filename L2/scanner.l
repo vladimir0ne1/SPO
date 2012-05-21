@@ -41,7 +41,7 @@ while { return WHILE; }
 "||" { return OR; }
 
 [a-z_A-Z][a-z0-9_A-Z]* { return IDENT; }
-[0-9]* { return NUMBER; }
+[0-9]* { yylval = atoi(yytext); return NUMBER; }
 
 "," { return COMMA; }
 ; { return SEMICOLON; }
@@ -51,7 +51,7 @@ while { return WHILE; }
 \/{2}(.*)	{ puts("comments"); }
 
 [ \t]	{ /* ignore whitespace */}
-.		{ printf("Mystery character %s\n", yytext);}
+.	{ printf("Mystery character %s\n", yytext);}
  
 %%				// Секция объявления вспомагательных функций
 //		"/""*".*"*""/"	func("Comments");
