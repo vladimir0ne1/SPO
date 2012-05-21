@@ -7,6 +7,8 @@ int action_num = 0;
 int declaration_num = 0;
 int function_var_declaration_num = 0;
 int function_declaration_num = 0;
+int condition_expression_num = 0;
+action_num_stack* action_stack_head = NULL;
 %}
 
 /* declare tokens */
@@ -198,11 +200,16 @@ dec_temp: IDENT { create_list_and_add_to_stack("IDENT", &head); }
  
 //============= FUNCTION ============================
 
-function_parameter: arithmetic_operation 
+function_parameter: arithmetic_operation {
+											puts("function_parametr");
+											//tree_node* temp = create_node("FUNCTION_PARAMETR_ARITHMETIC", 1, &head);
+											//add_node_to_stack("FUNCTION_PARAMETR_ARITHMETIC", temp, &head);
+											//root = temp;
+											}
  | function_call
  ;
 
-function_call: IDENT LEFT_BR param_list RIGHT_BR
+function_call: IDENT LEFT_BR param_list RIGHT_BR	{ create_list_and_add_to_stack("FUNCTION_CALL", &head); }
  ;
  
 param_list:
@@ -274,37 +281,127 @@ loop: DO function_body_with_brace WHILE LEFT_BR condition_expression_list RIGHT_
  ;
 //================ CONDITION =====================//
 
-condition: condition_if	{ puts("condition if"); }
- //| condition_if condition_else { puts("condition if else"); }
- | condition_if EOL condition_else { puts("condition_if_else"); }
+condition: condition_if EOL	{
+							puts("=-------------------- condition_if -----------------");
+							tree_node* temp = create_node("CONDITION_IF", 1, &head);
+							add_node_to_stack("CONDITION", temp, &head);
+							root = temp;
+							action_num = action_num_stack_pop(&action_stack_head);											
+						}
+ | condition_if EOL condition_else {
+										output_stack(head);
+										tree_node* temp = create_node("CONDITION_IF_ELSE", 2, &head);
+										add_node_to_stack("CONDITION", temp, &head);
+										root = temp;
+										output_stack(head);
+										action_num = action_num_stack_pop(&action_stack_head);			
+									}
  ;
  
-condition_if: IF LEFT_BR condition_expression_list RIGHT_BR function_body_with_brace
- | IF LEFT_BR condition_expression_list RIGHT_BR EOL function_body_with_brace
+condition_if: IF LEFT_BR condition_expression_list RIGHT_BR function_body_with_brace {
+													output_stack(head);
+													tree_node* temp = create_node("IF", 2, &head);
+													add_node_to_stack("IF", temp, &head);
+													root = temp;
+													output_stack(head);												
+												}
+ | IF LEFT_BR condition_expression_list RIGHT_BR EOL function_body_with_brace {														
+													output_stack(head);
+													tree_node* temp = create_node("IF", 2, &head);
+													add_node_to_stack("IF", temp, &head);
+													root = temp;													output_stack(head);																				
+												}
  ;
  
-condition_else: ELSE function_body_with_brace
- | ELSE EOL function_body_with_brace 
+condition_else: ELSE function_body_with_brace	{														
+													tree_node* temp = create_node("ELSE", 1, &head);
+													add_node_to_stack("ELSE", temp, &head);
+													root = temp;													
+												}
+ | ELSE EOL function_body_with_brace 	{														
+											tree_node* temp = create_node("ELSE", 1, &head);
+											add_node_to_stack("ELSE", temp, &head);
+											root = temp;														
+										}
  ;
 
-condition_expression_list: condition_expression_list bin_operator condition_expression { puts("condition expression list"); }
- | condition_expression
+condition_expression_list: condition_expression OR condition_expression
+													{
+													output_stack(head);
+														action_num_stack_push(action_num, &action_stack_head);
+														action_num = 0;
+														puts("condition expression list");
+														tree_node* temp = create_node("OR", 2, &head);
+														add_node_to_stack("OR", temp, &head);
+														root = temp;
+														output_stack(head);												
+													}
+ | condition_expression AND condition_expression
+													{
+														action_num_stack_push(action_num, &action_stack_head);
+														puts("condition expression list");
+														tree_node* temp = create_node("AND", 2, &head);
+														add_node_to_stack("AND", temp, &head);
+														root = temp;												
+													}
+														
+ | condition_expression	{
+							action_num_stack_push(action_num, &action_stack_head);
+							puts("condition expression list");
+							//tree_node* temp = create_node("CONDITION_EXPRESSION", 1, &head);
+							//add_node_to_stack("CONDITION_EXPRESSION", temp, &head);
+							//root = temp;
+						}
  ;
  
-condition_expression: NOT cond_temp 
+condition_expression: NOT cond_temp {
+										tree_node* temp = create_node("NOT", 1, &head);
+										add_node_to_stack("NOT", temp, &head);
+										root = temp;
+									}
  | cond_temp
  | error {printf("ERROR: line: %d: condition error\n", @1.first_line); }
  ;
  
 cond_temp: LEFT_BR cond_temp RIGHT_BR { puts("cond_temp in br"); }
- | function_parameter condition_operator function_parameter { puts("cond_temp"); }
- ;
-
-condition_operator:	LESS | LARGER | LESS_OR_EQUAL | LARGER_OR_EQUAL
- | EQUAL | NOT_EQUAL
- ;
- 
-bin_operator: OR | AND
+ | function_parameter LESS function_parameter {
+												puts("cond_temp");
+												output_stack(head);
+												tree_node* temp = create_node("LESS", 2, &head);
+												add_node_to_stack("LESS", temp, &head);
+												root = temp;
+												output_stack(head);
+											}
+ | function_parameter LARGER function_parameter {
+												puts("cond_temp");
+												tree_node* temp = create_node("LARGER", 2, &head);
+												add_node_to_stack("LARGER", temp, &head);
+												root = temp;
+											}
+ | function_parameter LESS_OR_EQUAL function_parameter {
+												puts("cond_temp");
+												tree_node* temp = create_node("LESS_OR_EQUAL", 2, &head);
+												add_node_to_stack("LESS_OR_EQUAL", temp, &head);
+												root = temp;
+											}
+ | function_parameter LARGER_OR_EQUAL function_parameter {
+												puts("cond_temp");
+												tree_node* temp = create_node("LARGER_OR_EQUAL", 2, &head);
+												add_node_to_stack("LARGER_OR_EQUAL", temp, &head);
+												root = temp;
+											}
+ | function_parameter EQUAL function_parameter {
+												puts("cond_temp");
+												tree_node* temp = create_node("EQUAL", 2, &head);
+												add_node_to_stack("EQUAL", temp, &head);
+												root = temp;
+											}
+ | function_parameter NOT_EQUAL function_parameter {
+												puts("cond_temp");
+												tree_node* temp = create_node("NOT_EQUAL", 2, &head);
+												add_node_to_stack("NOT_EQUAL", temp, &head);
+												root = temp;
+											}
  ;
 
 //================= ARRAY ================
