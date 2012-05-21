@@ -5,6 +5,8 @@ stack* head = NULL;
 tree_node* root = NULL;
 int action_num = 0;
 int declaration_num = 0;
+int function_var_declaration_num = 0;
+int function_declaration_num = 0;
 %}
 
 /* declare tokens */
@@ -44,28 +46,88 @@ int declaration_num = 0;
 
 %%
 
-program: program_x EOL main { puts("programm"); }
+program: program_x EOL main { puts("programm");
+								tree_node* temp = create_node("PROGRAMM", function_declaration_num, &head);
+								add_node_to_stack("PROGRAMM", temp, &head);
+								root = temp;
+								}
  | main
  ;
 
 program_x:
  | program_x EOL
- | program_x EOL function_declaration { puts("func decl"); }
- | function_declaration { puts("func decl"); }
+ | program_x EOL function_declaration { puts("func decl"); function_declaration_num++;}
+ | function_declaration { puts("func decl"); function_declaration_num++; }
  ;
 
-function_declaration: type IDENT LEFT_BR func_prototype_decl RIGHT_BR function_body_with_brace
- | type IDENT LEFT_BR func_prototype_decl RIGHT_BR EOL function_body_with_brace
+function_declaration: type IDENT func_prototype_decl_with_brace function_body_with_brace {
+																		
+																		create_list_and_add_to_stack("IDENT", &head);
+																		output_stack(head);
+																		tree_node* temp = create_node("FUNC_DECLAR", 4, &head);
+																		add_node_to_stack("FUNC_DECLAR", temp, &head);
+																		root = temp;
+																		function_var_declaration_num = 0;
+																		output_stack(head);
+																	}
+ | type IDENT func_prototype_decl_with_brace EOL function_body_with_brace {
+																		
+																		create_list_and_add_to_stack("IDENT", &head);
+																		output_stack(head);
+																		tree_node* temp = create_node("FUNC_DECLAR", 4, &head);
+																		add_node_to_stack("FUNC_DECLAR", temp, &head);
+																		root = temp;
+																		function_var_declaration_num = 0;
+																		output_stack(head);
+																	}
 	
  ;
 
+func_prototype_decl_with_brace: LEFT_BR func_prototype_decl RIGHT_BR {
+																		tree_node* temp = create_node("FUNC_PARAM_DECLAR", function_var_declaration_num, &head);
+																		add_node_to_stack("FUNC_VAR_DECLAR", temp, &head);
+																		root = temp;
+																		function_var_declaration_num = 0;
+																	}
+																	;
+
 func_prototype_decl:
- | type IDENT
- | func_prototype_decl COMMA type IDENT
+ | type IDENT								{
+												create_list_and_add_to_stack("IDENT", &head);
+												tree_node* temp = create_node("FUNC_VAR_DECLAR", 2, &head);
+												add_node_to_stack("FUNC_VAR_DECLAR", temp, &head);
+												root = temp;
+												function_var_declaration_num++;												
+											}
+ | func_prototype_decl COMMA type IDENT		{
+												create_list_and_add_to_stack("IDENT", &head);
+												tree_node* temp = create_node("FUNC_VAR_DECLAR", 2, &head);
+												add_node_to_stack("FUNC_VAR_DECLAR", temp, &head);
+												root = temp;
+												function_var_declaration_num++;
+											}
  ;
 
-main: type MAIN LEFT_BR func_prototype_decl RIGHT_BR function_body_with_brace { puts("main"); }
- | type MAIN LEFT_BR func_prototype_decl RIGHT_BR EOL function_body_with_brace { puts("main"); }
+main: type MAIN func_prototype_decl_with_brace function_body_with_brace { puts("main");
+																		create_list_and_add_to_stack("MAIN", &head);
+																		output_stack(head);
+																		tree_node* temp = create_node("FUNC_DECLAR", 4, &head);
+																		add_node_to_stack("FUNC_DECLAR", temp, &head);
+																		root = temp;
+																		function_var_declaration_num = 0;
+																		function_declaration_num++;
+																		output_stack(head);
+																		}
+ | type MAIN func_prototype_decl_with_brace EOL function_body_with_brace { puts("main");
+																		create_list_and_add_to_stack("MAIN", &head);
+																		output_stack(head);
+																		tree_node* temp = create_node("FUNC_DECLAR", 4, &head);
+																		add_node_to_stack("FUNC_DECLAR", temp, &head);
+																		root = temp;
+																		function_var_declaration_num = 0;
+																		function_declaration_num++;
+																		output_stack(head);
+																		}
  ;
 
 //===================================================================
@@ -75,7 +137,6 @@ function_body_with_brace:
 													tree_node* temp = create_node("BODY", action_num, &head);
 													add_node_to_stack("BODY", temp, &head);
 													root = temp;
-													//output_stack(head);
 													action_num = 0;
 													}
  ;
@@ -266,8 +327,8 @@ main(int argc, char **argv)
 {
 
 	yyparse();
-	puts("== stack: ==");
-	output_stack(head);
+	//puts("== stack: ==");
+	//output_stack(head);
 	puts("== tree: ==");
 	tree_node* temp = root;
 	output(root);
