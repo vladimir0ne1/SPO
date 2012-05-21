@@ -33,6 +33,8 @@ while { return WHILE; }
 
 \> { return LARGER; }
 \< { return LESS; }
+\<= {return LESS_OR_EQUAL; }
+\>= {return LARGER_OR_EQUAL; }
 \/ { return DIV; }
 \* { return MUL; }
 \% { return MOD; }
