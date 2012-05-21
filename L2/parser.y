@@ -1,5 +1,10 @@
 %{
 #  include <stdio.h>
+#include "tree.c"
+stack* head = NULL;
+tree_node* root = NULL;
+int action_num = 0;
+int declaration_num = 0;
 %}
 
 /* declare tokens */
@@ -49,28 +54,40 @@ program_x:
  | function_declaration { puts("func decl"); }
  ;
 
-function_declaration: type IDENT LEFT_BR func_prototype_decl RIGHT_BR LEFT_BRACE function_body RIGHT_BRACE
- | type IDENT LEFT_BR func_prototype_decl RIGHT_BR EOL LEFT_BRACE function_body RIGHT_BRACE
+function_declaration: type IDENT LEFT_BR func_prototype_decl RIGHT_BR function_body_with_brace
+ | type IDENT LEFT_BR func_prototype_decl RIGHT_BR EOL function_body_with_brace
+	
  ;
 
 func_prototype_decl:
- |type IDENT
+ | type IDENT
  | func_prototype_decl COMMA type IDENT
  ;
 
-main: type MAIN LEFT_BR func_prototype_decl RIGHT_BR LEFT_BRACE function_body RIGHT_BRACE { puts("main"); }
- | type MAIN LEFT_BR func_prototype_decl RIGHT_BR EOL LEFT_BRACE function_body RIGHT_BRACE { puts("main"); }
+main: type MAIN LEFT_BR func_prototype_decl RIGHT_BR function_body_with_brace { puts("main"); }
+ | type MAIN LEFT_BR func_prototype_decl RIGHT_BR EOL function_body_with_brace { puts("main"); }
  ;
 
 //===================================================================
 
+function_body_with_brace:
+ LEFT_BRACE function_body RIGHT_BRACE {				printf("actions: %d\n", action_num);													
+													tree_node* temp = create_node("BODY", action_num, &head);
+													add_node_to_stack("BODY", temp, &head);
+													root = temp;
+													//output_stack(head);
+													action_num = 0;
+													}
+ ;
+
 function_body:
  | function_body complited_action
  | function_body EOL
+ 
  ;
 
-complited_action: action SEMICOLON
- | condition
+complited_action: action SEMICOLON { action_num++;}
+ | condition {action_num++;}
  | error SEMICOLON {printf("ERROR: line: %d: action error\n", @1.first_line); }
  ;
 
@@ -81,23 +98,39 @@ action: function_call { puts("function call"); }
  ;
 
 assignment_operator:
- | IDENT ASSIGNMENT function_parameter
+ | IDENT ASSIGNMENT function_parameter {
+													//output_stack(head);
+													create_list_and_add_to_stack("IDENT", &head);
+													tree_node* temp = create_node("=", 2, &head);
+													add_node_to_stack("ASSIGNMENT", temp, &head);
+													root = temp;
+													//output_stack(head);													
+													}
  | array ASSIGNMENT function_parameter
  ;
 
-variable_declaration: type declaration_list
+variable_declaration: type declaration_list {
+												printf("declaration_num = %d\n", declaration_num);
+												tree_node* temp = create_node("DECLARATION LIST", declaration_num, &head);
+												add_node_to_stack("DECLARATION LIST", temp, &head);												
+												root = temp;
+												temp = create_node("DECLARATION", 2, &head);
+												add_node_to_stack("DECLARATION", temp, &head);
+												root = temp;				
+												declaration_num = 0;
+											}
  ;
 
-type: INT 
- | CHAR | VOID 
+type: INT { create_list_and_add_to_stack("INT", &head);}
+ | CHAR { create_list_and_add_to_stack("CHAR", &head);}
+ | VOID { create_list_and_add_to_stack("VOID", &head);}
  ;
 
-declaration_list: declaration_list COMMA dec_temp 
- | dec_temp
+declaration_list: declaration_list COMMA dec_temp {declaration_num++;}
+ | dec_temp {declaration_num++;}
  ;
 
-dec_temp: IDENT 
- | assignment_operator
+dec_temp: IDENT { create_list_and_add_to_stack("IDENT", &head); }
  | array
  | td_array
  ;
@@ -117,23 +150,66 @@ param_list:
  //| error { puts("param list error"); }
  ;
 
-arithmetic_operation: LEFT_BR arithmetic_operation RIGHT_BR
- | ABS arithmetic_operation ABS { $$ = $2 >= 0 ? $2 : -$2; }
- | arithmetic_operation SUB arithmetic_operation { $$ = $1 - $3; }
- | arithmetic_operation ADD arithmetic_operation { $$ = $1 + $3; }
- | arithmetic_operation MUL arithmetic_operation { $$ = $1*$3; }
- | arithmetic_operation DIV arithmetic_operation { $$ = $1/$3; }
- | arithmetic_operation MOD arithmetic_operation { $$ = $1%$3; }
- | SUB arithmetic_operation %prec UMINUS {$$=-$2;}
- | NUMBER {$$=$1;}
- | IDENT 
- | array
- | td_array
+arithmetic_operation: LEFT_BR arithmetic_operation RIGHT_BR {
+													puts("with_brace");
+													//create_list_and_add_to_stack("LEFT_BR", &head);
+													//create_list_and_add_to_stack("ARITHMETIC_OP", &head);
+													//create_list_and_add_to_stack("RIGHT_BR", &head);
+													//tree_node* temp = create_node("WITH_BRACE", 3, &head);
+													//add_node_to_stack("WITH_BRACE", temp, &head);
+													//root = temp;												
+																}
+ | ABS arithmetic_operation ABS { $$ = $2 >= 0 ? $2 : -$2; puts("abs");}
+ | arithmetic_operation SUB arithmetic_operation {
+													$$ = $1 - $3; puts("sub");
+													tree_node* temp = create_node("SUB", 2, &head);
+													add_node_to_stack("SUB", temp, &head);
+													root = temp;
+													}
+ | arithmetic_operation ADD arithmetic_operation {
+													$$ = $1 + $3; puts("add");
+													tree_node* temp = create_node("ADD", 2, &head);
+													add_node_to_stack("ADD", temp, &head);
+													root = temp;
+												}
+ | arithmetic_operation MUL arithmetic_operation {
+													$$ = $1*$3; puts("mul");
+													tree_node* temp = create_node("MUL", 2, &head);
+													add_node_to_stack("MUL", temp, &head);
+													root = temp;
+												}
+ | arithmetic_operation DIV arithmetic_operation {
+													$$ = $1/$3; puts("div");
+													tree_node* temp = create_node("DIV", 2, &head);
+													add_node_to_stack("DIV", temp, &head);
+													root = temp;
+												}
+ | arithmetic_operation MOD arithmetic_operation {
+													$$ = $1%$3; puts("mod");
+													tree_node* temp = create_node("MOD", 2, &head);
+													add_node_to_stack("MOD", temp, &head);
+													root = temp;
+												}
+ | SUB arithmetic_operation %prec UMINUS {
+											$$=-$2; puts("uminus");
+											tree_node* temp = create_node("UMINUS", 1, &head);
+											add_node_to_stack("UMINUS", temp, &head);
+											root = temp;
+										}
+ | NUMBER {
+			$$=$1; puts("number");
+			char x[5];
+			sprintf(x, "%d", $1);
+			create_list_and_add_to_stack(x, &head);
+			}
+ | IDENT {puts("IDENT"); create_list_and_add_to_stack("IDENT", &head);}
+ | array {puts("array"); create_list_and_add_to_stack("array", &head);}
+ | td_array {puts("td_array");}
  ;
 
 //================= LOOP =======================//
 
-loop: DO LEFT_BRACE function_body RIGHT_BRACE WHILE LEFT_BR condition_expression_list RIGHT_BR
+loop: DO function_body_with_brace WHILE LEFT_BR condition_expression_list RIGHT_BR
  ;
 //================ CONDITION =====================//
 
@@ -142,12 +218,12 @@ condition: condition_if	{ puts("condition if"); }
  | condition_if EOL condition_else { puts("condition_if_else"); }
  ;
  
-condition_if: IF LEFT_BR condition_expression_list RIGHT_BR LEFT_BRACE function_body RIGHT_BRACE
- | IF LEFT_BR condition_expression_list RIGHT_BR EOL LEFT_BRACE function_body RIGHT_BRACE
+condition_if: IF LEFT_BR condition_expression_list RIGHT_BR function_body_with_brace
+ | IF LEFT_BR condition_expression_list RIGHT_BR EOL function_body_with_brace
  ;
  
-condition_else: ELSE LEFT_BRACE function_body RIGHT_BRACE
- | ELSE EOL LEFT_BRACE function_body RIGHT_BRACE 
+condition_else: ELSE function_body_with_brace
+ | ELSE EOL function_body_with_brace 
  ;
 
 condition_expression_list: condition_expression_list bin_operator condition_expression { puts("condition expression list"); }
@@ -188,7 +264,15 @@ td_array: array index
  %%
 main(int argc, char **argv)
 {
+
 	yyparse();
+	puts("== stack: ==");
+	output_stack(head);
+	puts("== tree: ==");
+	tree_node* temp = root;
+	output(root);
+	puts("== stack: ==");
+	output_stack(head);
 }
 
 yyerror(char *s)
