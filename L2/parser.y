@@ -277,8 +277,21 @@ arithmetic_operation: LEFT_BR arithmetic_operation RIGHT_BR {
 
 //================= LOOP =======================//
 
-loop: DO function_body_with_brace WHILE LEFT_BR condition_expression_list RIGHT_BR
+loop: loop2 function_body_with_brace WHILE LEFT_BR condition_expression_list RIGHT_BR {
+																						create_list_and_add_to_stack("DO", &head);
+																						create_list_and_add_to_stack("WHILE", &head);
+																						tree_node* temp = create_node("DO_WHILE", 4, &head);
+																						add_node_to_stack("DO_WHILE", temp, &head);
+																						root = temp;
+																						action_num = action_num_stack_pop(&action_stack_head);
+																						}
  ;
+
+ loop2: DO {
+			puts("-------- DO ------");
+			 action_num_stack_push(action_num, &action_stack_head);
+			 action_num = 0;
+		}
 //================ CONDITION =====================//
 
 condition: condition_if EOL	{
@@ -297,15 +310,19 @@ condition: condition_if EOL	{
 										action_num = action_num_stack_pop(&action_stack_head);			
 									}
  ;
+
+
+if_temp: IF LEFT_BR {action_num_stack_push(action_num, &action_stack_head); puts("IF LEFT_BR -----------------------------");
+														action_num = 0;}
  
-condition_if: IF LEFT_BR condition_expression_list RIGHT_BR function_body_with_brace {
+condition_if: if_temp condition_expression_list RIGHT_BR function_body_with_brace {
 													output_stack(head);
 													tree_node* temp = create_node("IF", 2, &head);
 													add_node_to_stack("IF", temp, &head);
 													root = temp;
 													output_stack(head);												
 												}
- | IF LEFT_BR condition_expression_list RIGHT_BR EOL function_body_with_brace {														
+ | if_temp condition_expression_list RIGHT_BR EOL function_body_with_brace {														
 													output_stack(head);
 													tree_node* temp = create_node("IF", 2, &head);
 													add_node_to_stack("IF", temp, &head);
@@ -328,8 +345,7 @@ condition_else: ELSE function_body_with_brace	{
 condition_expression_list: condition_expression OR condition_expression
 													{
 													output_stack(head);
-														action_num_stack_push(action_num, &action_stack_head);
-														action_num = 0;
+														
 														puts("condition expression list");
 														tree_node* temp = create_node("OR", 2, &head);
 														add_node_to_stack("OR", temp, &head);
@@ -338,7 +354,8 @@ condition_expression_list: condition_expression OR condition_expression
 													}
  | condition_expression AND condition_expression
 													{
-														action_num_stack_push(action_num, &action_stack_head);
+														//action_num_stack_push(action_num, &action_stack_head);
+														//action_num = 0;
 														puts("condition expression list");
 														tree_node* temp = create_node("AND", 2, &head);
 														add_node_to_stack("AND", temp, &head);
@@ -346,8 +363,9 @@ condition_expression_list: condition_expression OR condition_expression
 													}
 														
  | condition_expression	{
-							action_num_stack_push(action_num, &action_stack_head);
-							puts("condition expression list");
+							//action_num_stack_push(action_num, &action_stack_head);
+							//action_num = 0;
+							puts("condition expression list + push");
 							//tree_node* temp = create_node("CONDITION_EXPRESSION", 1, &head);
 							//add_node_to_stack("CONDITION_EXPRESSION", temp, &head);
 							//root = temp;
