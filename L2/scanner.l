@@ -42,7 +42,7 @@ while { return WHILE; }
 "&&" { return AND; }
 "||" { return OR; }
 
-[a-z_A-Z][a-z0-9_A-Z]* { return IDENT; }
+[a-z_A-Z][a-z0-9_A-Z]* { yylval = yytext; return IDENT; }
 [0-9]* { yylval = atoi(yytext); return NUMBER; }
 
 "," { return COMMA; }

@@ -8,8 +8,14 @@ int declaration_num = 0;
 int function_var_declaration_num = 0;
 int function_declaration_num = 0;
 int condition_expression_num = 0;
+char* ident_name = NULL;
 action_num_stack* action_stack_head = NULL;
+ident_stack* ident_stack_head = NULL;
+declarated_ident_stack* declarated_ident_stack_head = NULL;
 %}
+
+
+
 
 /* declare tokens */
 %token NUMBER
@@ -48,9 +54,9 @@ action_num_stack* action_stack_head = NULL;
 
 %%
 
-program: program_x EOL main { puts("programm");
-								tree_node* temp = create_node("PROGRAMM", function_declaration_num, &head);
-								add_node_to_stack("PROGRAMM", temp, &head);
+program: program_x EOL main { 
+								tree_node* temp = create_node("PROGRAMM", "WORD", function_declaration_num, &head);
+								add_node_to_stack("PROGRAMM", "WORD", temp, &head);
 								root = temp;
 								}
  | main
@@ -58,77 +64,77 @@ program: program_x EOL main { puts("programm");
 
 program_x:
  | program_x EOL
- | program_x EOL function_declaration { puts("func decl"); function_declaration_num++;}
- | function_declaration { puts("func decl"); function_declaration_num++; }
+ | program_x EOL function_declaration { function_declaration_num++;}
+ | function_declaration { function_declaration_num++; }
  ;
 
-function_declaration: type IDENT func_prototype_decl_with_brace function_body_with_brace {
-																		
-																		create_list_and_add_to_stack("IDENT", &head);
-																		output_stack(head);
-																		tree_node* temp = create_node("FUNC_DECLAR", 4, &head);
-																		add_node_to_stack("FUNC_DECLAR", temp, &head);
+function_declaration: type ident func_prototype_decl_with_brace function_body_with_brace {
+																		ident_name = ident_stack_pop(&ident_stack_head);
+																		//create_list_and_add_to_stack(ident_name, &head);
+																		free(ident_name);
+																		tree_node* temp = create_node("FUNC_DECLAR", "WORD", 4, &head);
+																		add_node_to_stack("FUNC_DECLAR", "WORD", temp, &head);
 																		root = temp;
 																		function_var_declaration_num = 0;
-																		output_stack(head);
 																	}
- | type IDENT func_prototype_decl_with_brace EOL function_body_with_brace {
-																		
-																		create_list_and_add_to_stack("IDENT", &head);
-																		output_stack(head);
-																		tree_node* temp = create_node("FUNC_DECLAR", 4, &head);
-																		add_node_to_stack("FUNC_DECLAR", temp, &head);
+ | type ident func_prototype_decl_with_brace EOL function_body_with_brace {
+																		ident_name = ident_stack_pop(&ident_stack_head);
+																		//create_list_and_add_to_stack(ident_name, &head);
+																		free(ident_name);
+																		tree_node* temp = create_node("FUNC_DECLAR", "WORD", 4, &head);
+																		add_node_to_stack("FUNC_DECLAR", "WORD", temp, &head);
 																		root = temp;
 																		function_var_declaration_num = 0;
-																		output_stack(head);
-																	}
-	
+																	}	
  ;
 
 func_prototype_decl_with_brace: LEFT_BR func_prototype_decl RIGHT_BR {
-																		tree_node* temp = create_node("FUNC_PARAM_DECLAR", function_var_declaration_num, &head);
-																		add_node_to_stack("FUNC_VAR_DECLAR", temp, &head);
+																		tree_node* temp = create_node("FUNC_PARAM_DECLAR", "WORD", function_var_declaration_num, &head);
+																		add_node_to_stack("FUNC_VAR_DECLAR", "WORD", temp, &head);
 																		root = temp;
 																		function_var_declaration_num = 0;
 																	}
 																	;
 
 func_prototype_decl:
- | type IDENT								{
-												create_list_and_add_to_stack("IDENT", &head);
-												tree_node* temp = create_node("FUNC_VAR_DECLAR", 2, &head);
-												add_node_to_stack("FUNC_VAR_DECLAR", temp, &head);
+ | type ident								{
+												
+												ident_name = ident_stack_pop(&ident_stack_head);
+												declarated_ident_stack_push(ident_name, &declarated_ident_stack_head);
+												//create_list_and_add_to_stack(ident_name, &head);
+												free(ident_name);
+												tree_node* temp = create_node("FUNC_VAR_DECLAR", "WORD", 2, &head);
+												add_node_to_stack("FUNC_VAR_DECLAR", "WORD", temp, &head);
 												root = temp;
-												function_var_declaration_num++;												
+												function_var_declaration_num++;						
 											}
- | func_prototype_decl COMMA type IDENT		{
-												create_list_and_add_to_stack("IDENT", &head);
-												tree_node* temp = create_node("FUNC_VAR_DECLAR", 2, &head);
-												add_node_to_stack("FUNC_VAR_DECLAR", temp, &head);
+ | func_prototype_decl COMMA type ident		{
+												ident_name = ident_stack_pop(&ident_stack_head);
+												declarated_ident_stack_push(ident_name, &declarated_ident_stack_head);
+												//create_list_and_add_to_stack(ident_name, &head);
+												free(ident_name);
+												tree_node* temp = create_node("FUNC_VAR_DECLAR", "WORD", 2, &head);
+												add_node_to_stack("FUNC_VAR_DECLAR", "WORD", temp, &head);
 												root = temp;
 												function_var_declaration_num++;
 											}
  ;
 
-main: type MAIN func_prototype_decl_with_brace function_body_with_brace { puts("main");
-																		create_list_and_add_to_stack("MAIN", &head);
-																		output_stack(head);
-																		tree_node* temp = create_node("FUNC_DECLAR", 4, &head);
-																		add_node_to_stack("FUNC_DECLAR", temp, &head);
+main: type MAIN func_prototype_decl_with_brace function_body_with_brace { 
+																		create_list_and_add_to_stack("MAIN", "WORD", &head);
+																		tree_node* temp = create_node("FUNC_DECLAR", "WORD", 4, &head);
+																		add_node_to_stack("FUNC_DECLAR", "WORD", temp, &head);
 																		root = temp;
 																		function_var_declaration_num = 0;
 																		function_declaration_num++;
-																		output_stack(head);
 																		}
- | type MAIN func_prototype_decl_with_brace EOL function_body_with_brace { puts("main");
-																		create_list_and_add_to_stack("MAIN", &head);
-																		output_stack(head);
-																		tree_node* temp = create_node("FUNC_DECLAR", 4, &head);
-																		add_node_to_stack("FUNC_DECLAR", temp, &head);
+ | type MAIN func_prototype_decl_with_brace EOL function_body_with_brace { 
+																		create_list_and_add_to_stack("MAIN", "WORD", &head);
+																		tree_node* temp = create_node("FUNC_DECLAR", "WORD", 4, &head);
+																		add_node_to_stack("FUNC_DECLAR", "WORD", temp, &head);
 																		root = temp;
 																		function_var_declaration_num = 0;
 																		function_declaration_num++;
-																		output_stack(head);
 																		}
  ;
 
@@ -136,8 +142,8 @@ main: type MAIN func_prototype_decl_with_brace function_body_with_brace { puts("
 
 function_body_with_brace:
  LEFT_BRACE function_body RIGHT_BRACE {				printf("actions: %d\n", action_num);													
-													tree_node* temp = create_node("BODY", action_num, &head);
-													add_node_to_stack("BODY", temp, &head);
+													tree_node* temp = create_node("BODY", "WORD", action_num, &head);
+													add_node_to_stack("BODY", "WORD", temp, &head);
 													root = temp;
 													action_num = 0;
 													}
@@ -154,46 +160,47 @@ complited_action: action SEMICOLON { action_num++;}
  | error SEMICOLON {printf("ERROR: line: %d: action error\n", @1.first_line); }
  ;
 
-action: function_call { puts("function call"); }
- | assignment_operator { puts("assignment"); }
- | variable_declaration  { puts("declaration"); }
- | loop { puts("do while"); }
+action: function_call {  }
+ | assignment_operator {  }
+ | variable_declaration  {  }
+ | loop {  }
  ;
 
 assignment_operator:
- | IDENT ASSIGNMENT function_parameter {
-													//output_stack(head);
-													create_list_and_add_to_stack("IDENT", &head);
-													tree_node* temp = create_node("=", 2, &head);
-													add_node_to_stack("ASSIGNMENT", temp, &head);
+ | ident ASSIGNMENT function_parameter {
+													ident_name = ident_stack_pop(&ident_stack_head);
+													//create_list_and_add_to_stack(ident_name, &head);
+													free(ident_name);
+													tree_node* temp = create_node("=", "=", 2, &head);
+													add_node_to_stack("ASSIGNMENT", "WORD", temp, &head);
 													root = temp;
-													//output_stack(head);													
+																							
 													}
  | array ASSIGNMENT function_parameter
  ;
 
 variable_declaration: type declaration_list {
 												printf("declaration_num = %d\n", declaration_num);
-												tree_node* temp = create_node("DECLARATION LIST", declaration_num, &head);
-												add_node_to_stack("DECLARATION LIST", temp, &head);												
+												tree_node* temp = create_node("DECLARATION LIST", "WORD", declaration_num, &head);
+												add_node_to_stack("DECLARATION LIST", "WORD", temp, &head);												
 												root = temp;
-												temp = create_node("DECLARATION", 2, &head);
-												add_node_to_stack("DECLARATION", temp, &head);
+												temp = create_node("DECLARATION", "WORD", 2, &head);
+												add_node_to_stack("DECLARATION", "WORD", temp, &head);
 												root = temp;				
 												declaration_num = 0;
 											}
  ;
 
-type: INT { create_list_and_add_to_stack("INT", &head);}
- | CHAR { create_list_and_add_to_stack("CHAR", &head);}
- | VOID { create_list_and_add_to_stack("VOID", &head);}
+type: INT { create_list_and_add_to_stack("INT", "TYPE", &head);}
+ | CHAR { create_list_and_add_to_stack("CHAR", "TYPE", &head);}
+ | VOID { create_list_and_add_to_stack("VOID", "TYPE", &head);}
  ;
 
 declaration_list: declaration_list COMMA dec_temp {declaration_num++;}
  | dec_temp {declaration_num++;}
  ;
 
-dec_temp: IDENT { create_list_and_add_to_stack("IDENT", &head); }
+dec_temp: ident { ident_name = ident_stack_pop(&ident_stack_head); /*create_list_and_add_to_stack(ident_name, &head);*/ ; free(ident_name);}
  | array
  | td_array
  ;
@@ -201,16 +208,16 @@ dec_temp: IDENT { create_list_and_add_to_stack("IDENT", &head); }
 //============= FUNCTION ============================
 
 function_parameter: arithmetic_operation {
-											puts("function_parametr");
-											//tree_node* temp = create_node("FUNCTION_PARAMETR_ARITHMETIC", 1, &head);
-											//add_node_to_stack("FUNCTION_PARAMETR_ARITHMETIC", temp, &head);
+											
+											//tree_node* temp = create_node("FUNCTION_PARAMETR_ARITHMETIC", "WORD", 1, &head);
+											//add_node_to_stack("FUNCTION_PARAMETR_ARITHMETIC", "WORD", temp, &head);
 											//root = temp;
 											}
  | function_call
  ;
 
-function_call: IDENT LEFT_BR param_list RIGHT_BR	{ create_list_and_add_to_stack("FUNCTION_CALL", &head); }
- ;
+function_call: ident LEFT_BR param_list RIGHT_BR	{ create_list_and_add_to_stack("FUNCTION_CALL", "WORD", &head); }
+ ; //================== Исправить! =============
  
 param_list:
  | param_list COMMA function_parameter
@@ -219,69 +226,79 @@ param_list:
  ;
 
 arithmetic_operation: LEFT_BR arithmetic_operation RIGHT_BR {
-													puts("with_brace");
+													
 													//create_list_and_add_to_stack("LEFT_BR", &head);
 													//create_list_and_add_to_stack("ARITHMETIC_OP", &head);
 													//create_list_and_add_to_stack("RIGHT_BR", &head);
 													//tree_node* temp = create_node("WITH_BRACE", 3, &head);
-													//add_node_to_stack("WITH_BRACE", temp, &head);
+													//add_node_to_stack("WITH_BRACE", "WORD", temp, &head);
 													//root = temp;												
 																}
- | ABS arithmetic_operation ABS { $$ = $2 >= 0 ? $2 : -$2; puts("abs");}
+ | ABS arithmetic_operation ABS { $$ = $2 >= 0 ? $2 : -$2; }
  | arithmetic_operation SUB arithmetic_operation {
-													$$ = $1 - $3; puts("sub");
-													tree_node* temp = create_node("SUB", 2, &head);
-													add_node_to_stack("SUB", temp, &head);
+													$$ = $1 - $3; 
+													tree_node* temp = create_node("SUB", "MATH", 2, &head);
+													add_node_to_stack("SUB", "MATH", temp, &head);
 													root = temp;
-													}
+													}													
  | arithmetic_operation ADD arithmetic_operation {
-													$$ = $1 + $3; puts("add");
-													tree_node* temp = create_node("ADD", 2, &head);
-													add_node_to_stack("ADD", temp, &head);
+													$$ = $1 + $3; 
+													tree_node* temp = create_node("ADD", "MATH", 2, &head);
+													add_node_to_stack("ADD", "MATH", temp, &head);
 													root = temp;
 												}
  | arithmetic_operation MUL arithmetic_operation {
-													$$ = $1*$3; puts("mul");
-													tree_node* temp = create_node("MUL", 2, &head);
-													add_node_to_stack("MUL", temp, &head);
+													$$ = $1*$3; 
+													tree_node* temp = create_node("MUL", "MATH", 2, &head);
+													add_node_to_stack("MUL", "MATH", temp, &head);
 													root = temp;
 												}
  | arithmetic_operation DIV arithmetic_operation {
-													$$ = $1/$3; puts("div");
-													tree_node* temp = create_node("DIV", 2, &head);
-													add_node_to_stack("DIV", temp, &head);
+													$$ = $1/$3; 
+													tree_node* temp = create_node("DIV", "MATH", 2, &head);
+													add_node_to_stack("DIV", "MATH", temp, &head);
 													root = temp;
 												}
  | arithmetic_operation MOD arithmetic_operation {
-													$$ = $1%$3; puts("mod");
-													tree_node* temp = create_node("MOD", 2, &head);
-													add_node_to_stack("MOD", temp, &head);
+													$$ = $1%$3; 
+													tree_node* temp = create_node("MOD", "MATH", 2, &head);
+													add_node_to_stack("MOD", "MATH", temp, &head);
 													root = temp;
 												}
  | SUB arithmetic_operation %prec UMINUS {
-											$$=-$2; puts("uminus");
-											tree_node* temp = create_node("UMINUS", 1, &head);
-											add_node_to_stack("UMINUS", temp, &head);
+											$$=-$2; 
+											tree_node* temp = create_node("UMINUS", "MATH", 1, &head);
+											add_node_to_stack("UMINUS", "MATH", temp, &head);
 											root = temp;
 										}
  | NUMBER {
-			$$=$1; puts("number");
-			char x[5];
+			$$=$1; 
+			char x[10];
 			sprintf(x, "%d", $1);
-			create_list_and_add_to_stack(x, &head);
+			create_list_and_add_to_stack(x, "NUMBER", &head);
 			}
- | IDENT {puts("IDENT"); create_list_and_add_to_stack("IDENT", &head);}
- | array {puts("array"); create_list_and_add_to_stack("array", &head);}
- | td_array {puts("td_array");}
+ | ident {ident_name = ident_stack_pop(&ident_stack_head);  /*create_list_and_add_to_stack(ident_name, &head);*/ free(ident_name);
+}
+ | array { create_list_and_add_to_stack("array", "ARRAY", &head);}
+ | td_array {}
  ;
+
+ident: IDENT {
+				ident_name = calloc(40, sizeof(char));
+				strcpy(ident_name, $1);
+				ident_stack_push(ident_name, &ident_stack_head);
+				create_list_and_add_to_stack(ident_name, "IDENT", &head);
+				
+				free(ident_name);
+			};
 
 //================= LOOP =======================//
 
 loop: loop2 function_body_with_brace WHILE LEFT_BR condition_expression_list RIGHT_BR {
-																						create_list_and_add_to_stack("DO", &head);
-																						create_list_and_add_to_stack("WHILE", &head);
-																						tree_node* temp = create_node("DO_WHILE", 4, &head);
-																						add_node_to_stack("DO_WHILE", temp, &head);
+																						create_list_and_add_to_stack("DO", "WORD", &head);
+																						create_list_and_add_to_stack("WHILE", "WORD", &head);
+																						tree_node* temp = create_node("DO_WHILE", "WORD",4, &head);
+																						add_node_to_stack("DO_WHILE", "WORD", temp, &head);
 																						root = temp;
 																						action_num = action_num_stack_pop(&action_stack_head);
 																						}
@@ -296,15 +313,15 @@ loop: loop2 function_body_with_brace WHILE LEFT_BR condition_expression_list RIG
 
 condition: condition_if EOL	{
 							puts("=-------------------- condition_if -----------------");
-							tree_node* temp = create_node("CONDITION_IF", 1, &head);
-							add_node_to_stack("CONDITION", temp, &head);
+							tree_node* temp = create_node("CONDITION_IF", "WORD", 1, &head);
+							add_node_to_stack("CONDITION", "WORD", temp, &head);
 							root = temp;
 							action_num = action_num_stack_pop(&action_stack_head);											
 						}
  | condition_if EOL condition_else {
 										output_stack(head);
-										tree_node* temp = create_node("CONDITION_IF_ELSE", 2, &head);
-										add_node_to_stack("CONDITION", temp, &head);
+										tree_node* temp = create_node("CONDITION_IF_ELSE", "WORD", 2, &head);
+										add_node_to_stack("CONDITION", "WORD", temp, &head);
 										root = temp;
 										output_stack(head);
 										action_num = action_num_stack_pop(&action_stack_head);			
@@ -317,27 +334,27 @@ if_temp: IF LEFT_BR {action_num_stack_push(action_num, &action_stack_head); puts
  
 condition_if: if_temp condition_expression_list RIGHT_BR function_body_with_brace {
 													output_stack(head);
-													tree_node* temp = create_node("IF", 2, &head);
-													add_node_to_stack("IF", temp, &head);
+													tree_node* temp = create_node("IF", "WORD", 2, &head);
+													add_node_to_stack("IF", "WORD", temp, &head);
 													root = temp;
 													output_stack(head);												
 												}
  | if_temp condition_expression_list RIGHT_BR EOL function_body_with_brace {														
 													output_stack(head);
-													tree_node* temp = create_node("IF", 2, &head);
-													add_node_to_stack("IF", temp, &head);
+													tree_node* temp = create_node("IF", "WORD", 2, &head);
+													add_node_to_stack("IF", "WORD", temp, &head);
 													root = temp;													output_stack(head);																				
 												}
  ;
  
 condition_else: ELSE function_body_with_brace	{														
-													tree_node* temp = create_node("ELSE", 1, &head);
-													add_node_to_stack("ELSE", temp, &head);
+													tree_node* temp = create_node("ELSE", "WORD", 1, &head);
+													add_node_to_stack("ELSE", "WORD", temp, &head);
 													root = temp;													
 												}
  | ELSE EOL function_body_with_brace 	{														
-											tree_node* temp = create_node("ELSE", 1, &head);
-											add_node_to_stack("ELSE", temp, &head);
+											tree_node* temp = create_node("ELSE", "WORD", 1, &head);
+											add_node_to_stack("ELSE", "WORD", temp, &head);
 											root = temp;														
 										}
  ;
@@ -347,8 +364,8 @@ condition_expression_list: condition_expression OR condition_expression
 													output_stack(head);
 														
 														puts("condition expression list");
-														tree_node* temp = create_node("OR", 2, &head);
-														add_node_to_stack("OR", temp, &head);
+														tree_node* temp = create_node("OR", "BOOL", 2, &head);
+														add_node_to_stack("OR", "BOOL", temp, &head);
 														root = temp;
 														output_stack(head);												
 													}
@@ -357,8 +374,8 @@ condition_expression_list: condition_expression OR condition_expression
 														//action_num_stack_push(action_num, &action_stack_head);
 														//action_num = 0;
 														puts("condition expression list");
-														tree_node* temp = create_node("AND", 2, &head);
-														add_node_to_stack("AND", temp, &head);
+														tree_node* temp = create_node("AND", "BOOL", 2, &head);
+														add_node_to_stack("AND", "BOOL", temp, &head);
 														root = temp;												
 													}
 														
@@ -366,15 +383,15 @@ condition_expression_list: condition_expression OR condition_expression
 							//action_num_stack_push(action_num, &action_stack_head);
 							//action_num = 0;
 							puts("condition expression list + push");
-							//tree_node* temp = create_node("CONDITION_EXPRESSION", 1, &head);
-							//add_node_to_stack("CONDITION_EXPRESSION", temp, &head);
+							//tree_node* temp = create_node("CONDITION_EXPRESSION", "WORD", 1, &head);
+							//add_node_to_stack("CONDITION_EXPRESSION", "WORD", temp, &head);
 							//root = temp;
 						}
  ;
  
 condition_expression: NOT cond_temp {
-										tree_node* temp = create_node("NOT", 1, &head);
-										add_node_to_stack("NOT", temp, &head);
+										tree_node* temp = create_node("NOT", "BOOL", 1, &head);
+										add_node_to_stack("NOT", "BOOL", temp, &head);
 										root = temp;
 									}
  | cond_temp
@@ -385,46 +402,46 @@ cond_temp: LEFT_BR cond_temp RIGHT_BR { puts("cond_temp in br"); }
  | function_parameter LESS function_parameter {
 												puts("cond_temp");
 												output_stack(head);
-												tree_node* temp = create_node("LESS", 2, &head);
-												add_node_to_stack("LESS", temp, &head);
+												tree_node* temp = create_node("LESS", "BOOL", 2, &head);
+												add_node_to_stack("LESS", "BOOL", temp, &head);
 												root = temp;
 												output_stack(head);
 											}
  | function_parameter LARGER function_parameter {
 												puts("cond_temp");
-												tree_node* temp = create_node("LARGER", 2, &head);
-												add_node_to_stack("LARGER", temp, &head);
+												tree_node* temp = create_node("LARGER", "BOOL", 2, &head);
+												add_node_to_stack("LARGER", "BOOL", temp, &head);
 												root = temp;
 											}
  | function_parameter LESS_OR_EQUAL function_parameter {
 												puts("cond_temp");
-												tree_node* temp = create_node("LESS_OR_EQUAL", 2, &head);
-												add_node_to_stack("LESS_OR_EQUAL", temp, &head);
+												tree_node* temp = create_node("LESS_OR_EQUAL", "BOOL", 2, &head);
+												add_node_to_stack("LESS_OR_EQUAL", "BOOL", temp, &head);
 												root = temp;
 											}
  | function_parameter LARGER_OR_EQUAL function_parameter {
 												puts("cond_temp");
-												tree_node* temp = create_node("LARGER_OR_EQUAL", 2, &head);
-												add_node_to_stack("LARGER_OR_EQUAL", temp, &head);
+												tree_node* temp = create_node("LARGER_OR_EQUAL", "BOOL", 2, &head);
+												add_node_to_stack("LARGER_OR_EQUAL", "BOOL", temp, &head);
 												root = temp;
 											}
  | function_parameter EQUAL function_parameter {
 												puts("cond_temp");
-												tree_node* temp = create_node("EQUAL", 2, &head);
-												add_node_to_stack("EQUAL", temp, &head);
+												tree_node* temp = create_node("EQUAL", "BOOL", 2, &head);
+												add_node_to_stack("EQUAL", "BOOL", temp, &head);
 												root = temp;
 											}
  | function_parameter NOT_EQUAL function_parameter {
 												puts("cond_temp");
-												tree_node* temp = create_node("NOT_EQUAL", 2, &head);
-												add_node_to_stack("NOT_EQUAL", temp, &head);
+												tree_node* temp = create_node("NOT_EQUAL", "BOOL", 2, &head);
+												add_node_to_stack("NOT_EQUAL", "BOOL", temp, &head);
 												root = temp;
 											}
  ;
 
 //================= ARRAY ================
 
-array: IDENT index
+array: ident index
  ;
  
 index: LEFT_SQBR function_parameter RIGHT_SQBR
@@ -447,8 +464,10 @@ main(int argc, char **argv)
 	puts("== tree: ==");
 	tree_node* temp = root;
 	output(root);
-	puts("== stack: ==");
 	output_stack(head);
+	output_declarated_ident_stack(declarated_ident_stack_head);
+	//find_main(root);
+	start_tree_walking(root);
 }
 
 yyerror(char *s)
