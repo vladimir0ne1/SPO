@@ -457,17 +457,16 @@ td_array: array index
  %%
 main(int argc, char **argv)
 {
-
 	yyparse();
 	//puts("== stack: ==");
 	//output_stack(head);
 	puts("== tree: ==");
 	tree_node* temp = root;
 	output(root);
-	output_stack(head);
-	output_declarated_ident_stack(declarated_ident_stack_head);
+	output_stack(head);	
 	//find_main(root);
-	start_tree_walking(root);
+	start_tree_walking(root, declarated_ident_stack_head);
+	//output_declarated_ident_stack(declarated_ident_stack_head);
 }
 
 yyerror(char *s)

@@ -8,8 +8,7 @@ typedef struct tree_node
     char operation_name[50];
     int branch_num;
     struct tree_node **branch;
-}
-tree_node;
+} tree_node;
 
 typedef struct declarated_ident_stack
 {
@@ -18,12 +17,12 @@ typedef struct declarated_ident_stack
 	int value;
 }	declarated_ident_stack;
 
-void declarated_ident_set_val(int val, char* id_name, declarated_ident_stack **head)
+void declarated_ident_set_val(int val, char* id_name, declarated_ident_stack *head)
 {
-	declarated_ident_stack* temp = *head;
+	declarated_ident_stack* temp = head;
 	while(temp)
 	{
-		if (strcmp(id_name, temp->name))
+		if (strcmp(id_name, temp->name) == 0)
 		{
 			temp->value = val;
 			return;
@@ -31,11 +30,47 @@ void declarated_ident_set_val(int val, char* id_name, declarated_ident_stack **h
 		else
 			temp = temp->next;
 	}	
-		printf("ERROR: undeclaratred param: %s", id_name);
+		printf("ERROR: undeclaratred param: %s\n", id_name);
 	return;
 }
+
+int declarated_ident_stack_find(char* id_name, declarated_ident_stack* head)
+{
+	declarated_ident_stack* temp = head;
+	while(temp)
+	{
+		//printf("decl_id_find: name: %s\n", temp->name);
+		if (strcmp(id_name, temp->name) == 0)
+		{			 
+			return temp->value;
+		}
+		else
+			temp = temp->next;
+	}	
+		printf("ERROR: undeclaratred param: %s\n", id_name);
+	return 0;
+}
+
+int is_declarated(char* id_name, declarated_ident_stack* head)
+{
+	declarated_ident_stack* temp = head;
+	while(temp)
+	{
+		if (strcmp(id_name, temp->name) == 0)
+		{
+			//temp->value = val;
+			return 1;
+		}
+		else
+			temp = temp->next;
+	}	
+		printf("ERROR: undeclaratred param: %s\n", id_name);
+	return 0;
+}
+
 void declarated_ident_stack_push(char* id_name, declarated_ident_stack **head)
 {
+	puts(id_name);
 	declarated_ident_stack* temp = (*head);
 	temp = calloc(1, sizeof(declarated_ident_stack));
 	temp->next = (*head);
@@ -43,16 +78,19 @@ void declarated_ident_stack_push(char* id_name, declarated_ident_stack **head)
 	strcpy(temp->name, id_name);
 	(*head) = temp;
 }
+
 void output_declarated_ident_stack(declarated_ident_stack* head)
 {
 	puts("==== output_declarated_ident_stack start: ====");
 	while(head)
 	{
-		puts(head->name);
+		printf("%s = %d\n", head->name, head->value);
+		//puts(head->name);
 		head = head->next;
 	}
 	puts("==== output_declarated_ident_stack end: ====");
 }
+
 typedef struct stack
 {
 	char name[50];
@@ -206,8 +244,8 @@ void output(tree_node* s)
 }
 
 
-
 //================================================ Tree Walking ================
+
 typedef struct math_stack
 {
     int value;
@@ -217,7 +255,7 @@ math_stack;
 
 void math_stack_push(int x, math_stack **head)
 {
-	printf("math_stack_push: %d\n", x);
+	//printf("math_stack_push: %d\n", x);
 	math_stack* temp = calloc(1, sizeof(math_stack));
 	temp->value = x;
 	temp->next = (*head);
@@ -225,7 +263,7 @@ void math_stack_push(int x, math_stack **head)
 }
 void math_stack_calculate(char* op, math_stack **head)
 {
-	printf("math_stack_calculate: %s\n", op);
+	//printf("math_stack_calculate: %s\n", op);
 	int x = 0;
 	math_stack* temp;
 	if(strcmp(op, "SUB") == 0)
@@ -259,7 +297,6 @@ void math_stack_calculate(char* op, math_stack **head)
 	free(temp);
 }
 	
-
 tree_node* find_main(tree_node* s)
 {	
 	if(s)
@@ -280,27 +317,37 @@ tree_node* find_main(tree_node* s)
 	}
 }
 
-int calculate(tree_node* s)
+int calculate(tree_node* s, declarated_ident_stack* d_head)
 {	
 	static op_num = 0;
-	printf("calculation start: level %d\n", op_num);
+	static int ident_val = 0;
+	//printf("calculation start: level %d\n", op_num);
 	static math_stack* head = NULL;
 	if(s->branch_num != 0)
 	{
 		puts(s->name);
 		op_num++;
-		printf("op num: %d\n", op_num);
-		calculate(s->branch[0]);
-		calculate(s->branch[1]);				
+		//printf("op num: %d\n", op_num);
+		calculate(s->branch[0], d_head);
+		calculate(s->branch[1], d_head);				
 			math_stack_calculate(s->name, &head);
 		return head->value;		
 	}
-	math_stack_push(atoi(s->name), &head);
+	if(strcmp(s->operation_name, "NUMBER") == 0)
+		math_stack_push(atoi(s->name), &head);
+	if(strcmp(s->operation_name, "IDENT") == 0)
+	{
+		//output_declarated_ident_stack(d_head);
+		//printf("calculation: ident name: %s\n", s->name);
+		ident_val = declarated_ident_stack_find(s->name, d_head);
+		math_stack_push(ident_val, &head);
+	}
 	op_num--;
 }
 
-void start_tree_walking(tree_node* s)
+void start_tree_walking(tree_node* s, declarated_ident_stack* head)
 {
+	//declarated_ident_stack* declarated_ident_stack_head;
 	tree_node* work = s->branch[0]->branch[1];
 	tree_node* temp = work;
 	int x = work->branch_num;
@@ -308,15 +355,34 @@ void start_tree_walking(tree_node* s)
 	int i = 0;
 	while(x>0)
 	{
-		work = work->branch[i];
+		work = work->branch[i];		// body branch: 1, 2, 3 action etc.
 		puts(work->name);
 		if( strcmp(work->name, "=") == 0)
 		{
-			printf(" value: %d\n", calculate(work->branch[0]));
+			if(is_declarated(work->branch[1]->name, head) == 0)
+			{
+				break;
+			}
+			int z = calculate(work->branch[0], head);
+			printf(" value: %d\n", z);			
+			declarated_ident_set_val(z, work->branch[1]->name, head);
+			output_declarated_ident_stack(head);	
 		}
+		if( strcmp(work->name, "DECLARATION") == 0)
+		{
+			int j = work->branch[0]->branch_num-1;
+			//printf("decl: i = %d, j = %d\n", i, j);
+			while(j>-1)
+			{
+				declarated_ident_stack_push(work->branch[0]->branch[j], &head);
+				j--;
+				//output_declarated_ident_stack(head);
+			}
+		}
+		work = temp;
+		
 		x--;
 		i++;
 	}
+	output_declarated_ident_stack(head);
 }
-
-	
