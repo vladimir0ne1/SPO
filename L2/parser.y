@@ -12,6 +12,7 @@ char* ident_name = NULL;
 action_num_stack* action_stack_head = NULL;
 ident_stack* ident_stack_head = NULL;
 declarated_ident_stack* declarated_ident_stack_head = NULL;
+int function_parameter_num = 0;
 %}
 
 
@@ -33,6 +34,8 @@ declarated_ident_stack* declarated_ident_stack_head = NULL;
 %token LEFT_BR RIGHT_BR					//()
 %token LEFT_BRACE RIGHT_BRACE 			//{}
 %token LEFT_SQBR RIGHT_SQBR				//[]
+
+%token RETURN
 
 %token MAIN
 
@@ -164,6 +167,7 @@ action: function_call {  }
  | assignment_operator {  }
  | variable_declaration  {  }
  | loop {  }
+ | return { }
  ;
 
 assignment_operator:
@@ -209,19 +213,25 @@ dec_temp: ident { ident_name = ident_stack_pop(&ident_stack_head); /*create_list
 
 function_parameter: arithmetic_operation {
 											
-											//tree_node* temp = create_node("FUNCTION_PARAMETR_ARITHMETIC", "WORD", 1, &head);
-											//add_node_to_stack("FUNCTION_PARAMETR_ARITHMETIC", "WORD", temp, &head);
-											//root = temp;
+											
 											}
  | function_call
  ;
 
-function_call: ident LEFT_BR param_list RIGHT_BR	{ create_list_and_add_to_stack("FUNCTION_CALL", "WORD", &head); }
+function_call: ident LEFT_BR param_list RIGHT_BR	{
+											tree_node* temp = create_node("FUNCTION_PARAMETER_LIST", "WORD", function_parameter_num, &head);
+											add_node_to_stack("FUNCTION_PARAMETER_LIST", "WORD", temp, &head);
+											root = temp;
+											temp = create_node("FUNCTION_CALL", "WORD", 2, &head);
+											add_node_to_stack("FUNCTION_CALL", "WORD", temp, &head);
+											root = temp;
+											function_parameter_num = 0;
+											}
  ; //================== Исправить! =============
  
 param_list:
- | param_list COMMA function_parameter
- | function_parameter
+ | param_list COMMA function_parameter { function_parameter_num++; }
+ | function_parameter { function_parameter_num++; }
  //| error { puts("param list error"); }
  ;
 
@@ -277,7 +287,7 @@ arithmetic_operation: LEFT_BR arithmetic_operation RIGHT_BR {
 			sprintf(x, "%d", $1);
 			create_list_and_add_to_stack(x, "NUMBER", &head);
 			}
- | ident {ident_name = ident_stack_pop(&ident_stack_head);  /*create_list_and_add_to_stack(ident_name, &head);*/ free(ident_name);
+ | ident {ident_name = ident_stack_pop(&ident_stack_head);  free(ident_name);
 }
  | array { create_list_and_add_to_stack("array", "ARRAY", &head);}
  | td_array {}
@@ -290,7 +300,18 @@ ident: IDENT {
 				create_list_and_add_to_stack(ident_name, "IDENT", &head);
 				
 				free(ident_name);
-			};
+			}
+ ;
+
+return: RETURN ident {	tree_node* temp = create_node("RETURN", "RETURN", 1, &head);
+						add_node_to_stack("RETURN", "RETURN", temp, &head);
+						root = temp;
+					 }
+| RETURN arithmetic_operation { 			tree_node* temp = create_node("RETURN", "RETURN", 1, &head);
+						add_node_to_stack("RETURN", "RETURN", temp, &head);
+						root = temp;
+			 }
+ ;
 
 //================= LOOP =======================//
 
@@ -465,7 +486,7 @@ main(int argc, char **argv)
 	output(root);
 	output_stack(head);	
 	//find_main(root);
-	start_tree_walking(root, declarated_ident_stack_head);
+	start_tree_walking(root, root, declarated_ident_stack_head, 0);
 	//output_declarated_ident_stack(declarated_ident_stack_head);
 }
 

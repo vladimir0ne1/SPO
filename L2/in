@@ -1,0 +1,22 @@
+void func_2(int h)
+{
+h = 13-1;
+return h;
+}
+void my_func(int x, int a)
+{
+	int z;
+	z = 7+9;
+	a = func_2(2);
+	z = a;
+	return z;
+}
+int main(int param)
+{
+int b;
+int a;
+a = 2+3;
+param = 7;
+a = my_func(2, 3);
+b = 9;
+}

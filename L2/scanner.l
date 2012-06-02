@@ -16,6 +16,7 @@ else { return ELSE; }
 
 do { return DO; }
 while { return WHILE; }
+return {return RETURN;}
 
 \( { return LEFT_BR; }
 \) { return RIGHT_BR; }

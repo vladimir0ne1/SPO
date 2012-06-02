@@ -10,6 +10,13 @@ typedef struct tree_node
     struct tree_node **branch;
 } tree_node;
 
+typedef struct stack_return
+{
+    int num;
+    struct stack_return *next;
+} stack_return;
+
+
 typedef struct declarated_ident_stack
 {
 	char name[50];
@@ -71,6 +78,7 @@ int is_declarated(char* id_name, declarated_ident_stack* head)
 void declarated_ident_stack_push(char* id_name, declarated_ident_stack **head)
 {
 	puts(id_name);
+	puts("declarated_ident_func");
 	declarated_ident_stack* temp = (*head);
 	temp = calloc(1, sizeof(declarated_ident_stack));
 	temp->next = (*head);
@@ -297,24 +305,32 @@ void math_stack_calculate(char* op, math_stack **head)
 	free(temp);
 }
 	
-tree_node* find_main(tree_node* s)
-{	
+tree_node* find_func(tree_node* s, char* func_name)
+{
+	static tree_node* temp = NULL;
 	if(s)
-	{		
+	{
+		
 		if (s->branch_num != 0)
-		{
-			
-			find_main(s->branch[0]);
+		{			
+			find_func(s->branch[0], func_name);
 			int i = 1;
 			while(i<(s->branch_num))
 			{
-				find_main(s->branch[i]);				
+				find_func(s->branch[i], func_name);				
 				i++;
 			}
 		}
-		if(strcmp(s->name, "MAIN") == 0)
-			printf("%-20s, main was found\n", s->name);
+		if(strcmp(s->name, "FUNC_DECLAR") == 0 && strcmp(s->branch[2]->name, func_name) == 0)
+		{
+			printf("%-20s, Func was found\n", s->branch[2]->name);
+			puts(s->branch[0]->name);
+			puts(s->branch[1]->name);
+			puts(s->branch[3]->name);
+			temp = s;
+		}
 	}
+	return temp;
 }
 
 int calculate(tree_node* s, declarated_ident_stack* d_head)
@@ -345,11 +361,35 @@ int calculate(tree_node* s, declarated_ident_stack* d_head)
 	op_num--;
 }
 
-void start_tree_walking(tree_node* s, declarated_ident_stack* head)
+int start_tree_walking(tree_node* s, tree_node* root , declarated_ident_stack* head, int flag)
 {
-	//declarated_ident_stack* declarated_ident_stack_head;
-	tree_node* work = s->branch[0]->branch[1];
+	head = NULL;
+	tree_node* work = NULL;
+	if(flag == 0)
+	{
+		work = s->branch[0]->branch[1];
+		int zz = 0;
+		zz = s->branch[0]->branch[2]->branch_num;
+		while(zz)
+		{
+			declarated_ident_stack_push(s->branch[0]->branch[2]->branch[zz-1]->branch[0]->name, &head);
+			zz--;
+		}
+	}		
+	else
+		{
+			puts(s->name);
+			work = s->branch[0];
+			int zz = 0;
+			zz = s->branch[1]->branch_num;
+			while(zz)
+			{
+				declarated_ident_stack_push(s->branch[1]->branch[zz-1]->branch[0]->name, &head);
+				zz--;
+			}
+		}
 	tree_node* temp = work;
+	declarated_ident_stack* head_2;
 	int x = work->branch_num;
 	printf("branch_num: %d\n", x);
 	int i = 0;
@@ -357,6 +397,11 @@ void start_tree_walking(tree_node* s, declarated_ident_stack* head)
 	{
 		work = work->branch[i];		// body branch: 1, 2, 3 action etc.
 		puts(work->name);
+		if( strcmp(work->name, "FUNCTION_CALL") == 0)
+		{
+			head_2 = NULL;
+			start_tree_walking(find_func(root, work->branch[1]->name), root, head_2, 1);
+		}
 		if( strcmp(work->name, "=") == 0)
 		{
 			int z;
@@ -364,12 +409,29 @@ void start_tree_walking(tree_node* s, declarated_ident_stack* head)
 			{
 				break;
 			}
+			
 			if(work->branch[0]->branch_num == 0)
 			{
-				z = atoi(work->branch[0]->name);
+				if(strcmp(work->branch[0]->operation_name, "NUMBER") == 0)
+					z = atoi(work->branch[0]->name);
+				
+				if(strcmp(work->branch[0]->operation_name, "IDENT") == 0)
+					z = declarated_ident_stack_find(work->branch[0]->name, head);			
 			}
 			else
-				z = calculate(work->branch[0], head);
+			{
+				puts("abra");
+				//puts(work->branch[0]->name);
+				if(strcmp(work->branch[0]->name, "FUNCTION_CALL") == 0)
+				{
+					head_2 = NULL;
+					puts("abra2");
+					puts(work->branch[0]->branch[1]->name);
+					z = start_tree_walking(find_func(root, work->branch[0]->branch[1]->name), root, head_2, 1);
+				}
+				else				
+					z = calculate(work->branch[0], head);
+			}
 			printf(" value: %d\n", z);			
 			declarated_ident_set_val(z, work->branch[1]->name, head);
 			output_declarated_ident_stack(head);	
@@ -380,11 +442,27 @@ void start_tree_walking(tree_node* s, declarated_ident_stack* head)
 			//printf("decl: i = %d, j = %d\n", i, j);
 			while(j>-1)
 			{
-				declarated_ident_stack_push(work->branch[0]->branch[j], &head);
+				declarated_ident_stack_push(work->branch[0]->branch[j]->name, &head);
 				j--;
-				//output_declarated_ident_stack(head);
+				output_declarated_ident_stack(head);
 			}
 		}
+		if( strcmp(work->name, "RETURN") == 0)
+		{
+			int ret_val = 0;
+			if(strcmp(work->branch[0]->operation_name, "NUMBER") == 0)
+				{
+					ret_val = atoi(work->branch[0]->name);
+					printf("ret_val = %d\n", ret_val);
+				}
+			else
+				{
+					ret_val = declarated_ident_stack_find(work->branch[0]->name, head);
+					printf("ret_val = %d\n", ret_val);
+				}
+				return ret_val;
+		}
+			
 		work = temp;
 		
 		x--;
