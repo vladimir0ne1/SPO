@@ -322,7 +322,7 @@ int calculate(tree_node* s, declarated_ident_stack* d_head)
 	static op_num = 0;
 	static int ident_val = 0;
 	//printf("calculation start: level %d\n", op_num);
-	static math_stack* head = NULL;
+	static math_stack* head = NULL;	
 	if(s->branch_num != 0)
 	{
 		puts(s->name);
@@ -359,11 +359,17 @@ void start_tree_walking(tree_node* s, declarated_ident_stack* head)
 		puts(work->name);
 		if( strcmp(work->name, "=") == 0)
 		{
+			int z;
 			if(is_declarated(work->branch[1]->name, head) == 0)
 			{
 				break;
 			}
-			int z = calculate(work->branch[0], head);
+			if(work->branch[0]->branch_num == 0)
+			{
+				z = atoi(work->branch[0]->name);
+			}
+			else
+				z = calculate(work->branch[0], head);
 			printf(" value: %d\n", z);			
 			declarated_ident_set_val(z, work->branch[1]->name, head);
 			output_declarated_ident_stack(head);	
