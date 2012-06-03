@@ -1,25 +1,9 @@
-int func(int h)
-{
-	h = 8+h*3;
-	return h;
-}
+
 int main()
 {
-	int z;
-	z = 10;
-	int ff;
-	ff = 9;
-	if(2<=1)
-	{
-		int x;
-		ff = func(7);	
-		x = 19-1;
-		z = 1;
-	}
-	else
-	{
-		int y;
-		y = 27-6;
-		z = 11;
-	}
+	int i;
+	i = 5;
+	do{
+	i = i-1;
+	}while(i>0);
 }

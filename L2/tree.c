@@ -258,6 +258,32 @@ int start_tree_walking(tree_node* s, tree_node* root , declarated_ident_stack* h
 				start_tree_walking(work->branch[1]->branch[0], root, head, 2, param_stack_head);
 			}
 		}
+		if( strcmp(work->name, "CONDITION_IF") == 0)
+		{
+			puts("condition if");
+			int cond = 3;
+			cond = bool_calculate(work->branch[0]->branch[1], head);
+			printf("cond = %d\n", cond);
+			if(cond == 1)
+			{						
+				//printf("branch num = %d\n", work->branch[0]->branch[0]->branch_num);
+				start_tree_walking(work->branch[0]->branch[0], root, head, 2, param_stack_head);
+			}
+		}
+		if( strcmp(work->name, "DO_WHILE") == 0)
+		{
+			puts("Do-while!");
+			int cond = 3;						
+			start_tree_walking(work->branch[3], root, head, 2, param_stack_head);
+			cond = bool_calculate(work->branch[2], head);
+			printf("cond = %d\n", cond);
+			while(cond == 1)
+			{					
+				start_tree_walking(work->branch[3], root, head, 2, param_stack_head);
+				cond = bool_calculate(work->branch[2], head);
+				printf("cond = %d\n", cond);
+			}
+		}
 			
 		work = temp;
 		
