@@ -1,22 +1,25 @@
-void func_2(int h)
+int func(int h)
 {
-h = 13-1;
-return h;
+	h = 8+h*3;
+	return h;
 }
-void my_func(int x, int a)
+int main()
 {
 	int z;
-	z = 7+9;
-	a = func_2(2);
-	z = a;
-	return z;
-}
-int main(int param)
-{
-int b;
-int a;
-a = 2+3;
-param = 7;
-a = my_func(2, 3);
-b = 9;
+	z = 10;
+	int ff;
+	ff = 9;
+	if(2<=1)
+	{
+		int x;
+		ff = func(7);	
+		x = 19-1;
+		z = 1;
+	}
+	else
+	{
+		int y;
+		y = 27-6;
+		z = 11;
+	}
 }

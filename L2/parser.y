@@ -464,7 +464,7 @@ cond_temp: LEFT_BR cond_temp RIGHT_BR { puts("cond_temp in br"); }
 
 array: ident index
  ;
- 
+;
 index: LEFT_SQBR function_parameter RIGHT_SQBR
 
 td_array: array index
@@ -483,10 +483,10 @@ main(int argc, char **argv)
 	//output_stack(head);
 	puts("== tree: ==");
 	tree_node* temp = root;
-	output(root);
-	output_stack(head);	
+	output_tree(root);
+	output_stack(head);
 	//find_main(root);
-	start_tree_walking(root, root, declarated_ident_stack_head, 0);
+	start_tree_walking(root, root, declarated_ident_stack_head, 0, NULL);
 	//output_declarated_ident_stack(declarated_ident_stack_head);
 }
 
